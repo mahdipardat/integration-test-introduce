@@ -15,7 +15,7 @@ describe('UserService', () => {
     let module: TestingModule;
     let sut: UserService;
     let database: Database;
-    let messageBus: DeepMocked<IMessageBus>;
+    let bus: IBus;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -24,11 +24,11 @@ describe('UserService', () => {
                 Database,
                 {
                     provide: IBus,
-                    useClass: Bus
+                    useValue: createMock<IBus>()
                 },
                 {
                     provide: IMessageBus,
-                    useValue: createMock<MessageBus>()
+                    useClass: MessageBus
                 },
                 UserService
             ]
@@ -36,7 +36,7 @@ describe('UserService', () => {
 
         sut = module.get(UserService);
         database = module.get(Database);
-        messageBus = module.get(IMessageBus)
+        bus = module.get(IBus)
     });
 
     beforeEach(async () => {
@@ -75,6 +75,6 @@ describe('UserService', () => {
         const companyFromDb = await database.getCompany();
         expect(companyFromDb.numberOfEmployees).toEqual(0);
 
-        expect(messageBus.sendEmailChangedMessage).toBeCalledTimes(1)
+        expect(bus.send).toBeCalledTimes(1)
     })
 })
