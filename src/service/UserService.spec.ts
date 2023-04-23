@@ -1,21 +1,41 @@
-import { createMock, DeepMocked } from "@golevelup/ts-jest";
+
 import { Test, TestingModule } from "@nestjs/testing"
 import { Company } from "../domain/Company";
 import { User } from "../domain/User";
 import { UserType } from "../domain/UserType.enum";
-import { Bus } from "../infra/bus";
 import { Database } from "../infra/Database";
 import { IBus } from "../infra/IBus";
 import { IMessageBus } from "../infra/IMessageBus";
 import { MessageBus } from "../infra/MessageBus";
 import { UserService } from "./UserService";
 
+class BusSpy implements IBus {
+    private _messages: Array<string> = [];
+
+    send(message: string): void {
+        // mock logic
+        this._messages.push(message)
+    }
+
+    public shouldRaisedMessages(): BusSpy {
+        expect(this._messages.length).toEqual(1);
+        return this;
+    }
+
+    public shouldBeOk(): BusSpy {
+        // testing assertion
+
+        return this;
+    }
+
+}
+
 
 describe('UserService', () => {
     let module: TestingModule;
     let sut: UserService;
     let database: Database;
-    let bus: IBus;
+    let bus: BusSpy;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -24,7 +44,7 @@ describe('UserService', () => {
                 Database,
                 {
                     provide: IBus,
-                    useValue: createMock<IBus>()
+                    useClass: BusSpy
                 },
                 {
                     provide: IMessageBus,
@@ -75,6 +95,6 @@ describe('UserService', () => {
         const companyFromDb = await database.getCompany();
         expect(companyFromDb.numberOfEmployees).toEqual(0);
 
-        expect(bus.send).toBeCalledTimes(1)
+        bus.shouldBeOk().shouldRaisedMessages()
     })
 })
